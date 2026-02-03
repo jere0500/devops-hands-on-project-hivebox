@@ -18,54 +18,56 @@ var (
 
 // types for receiving
 // generated using https://jsonlint.com/json-to-go, on a sample output
+
+// APIResponse main API response of opensensemap
 type APIResponse struct {
-	Id                string          `json:"_id,omitempty"`
+	ID                string          `json:"_id,omitempty"`
 	CreatedAt         string          `json:"createdAt,omitempty"`
 	UpdatedAt         string          `json:"updatedAt,omitempty"`
 	Name              string          `json:"name,omitempty"`
-	CurrentLocation   CurrentLocation `json:"currentLocation,omitempty"`
+	CurrentLocation   currentLocation `json:"currentLocation,omitempty"`
 	Exposure          string          `json:"exposure,omitempty"`
-	Sensors           []Sensors       `json:"sensors,omitempty"`
+	Sensors           []sensors       `json:"sensors,omitempty"`
 	Model             string          `json:"model,omitempty"`
 	LastMeasurementAt string          `json:"lastMeasurementAt,omitempty"`
 	Grouptag          []string        `json:"grouptag,omitempty"`
 	Weblink           string          `json:"weblink,omitempty"`
-	Loc               []Loc           `json:"loc,omitempty"`
+	Loc               []loc           `json:"loc,omitempty"`
 }
 
-type CurrentLocation struct {
+type currentLocation struct {
 	Type        string    `json:"type,omitempty"`
 	Coordinates []float64 `json:"coordinates,omitempty"`
 	Timestamp   string    `json:"timestamp,omitempty"`
 }
 
-type LastMeasurement struct {
+type lastMeasurement struct {
 	CreatedAt string `json:"createdAt,omitempty"`
 	Value     string `json:"value,omitempty"`
 }
 
-type Sensors struct {
+type sensors struct {
 	Title           string          `json:"title,omitempty"`
 	Unit            string          `json:"unit,omitempty"`
 	SensorType      string          `json:"sensorType,omitempty"`
 	Icon            string          `json:"icon,omitempty"`
-	Id              string          `json:"_id,omitempty"`
-	LastMeasurement LastMeasurement `json:"lastMeasurement,omitempty"`
+	ID              string          `json:"_id,omitempty"`
+	LastMeasurement lastMeasurement `json:"lastMeasurement,omitempty"`
 }
 
-type Geometry struct {
+type geometry struct {
 	Type        string    `json:"type,omitempty"`
 	Coordinates []float64 `json:"coordinates,omitempty"`
 	Timestamp   string    `json:"timestamp,omitempty"`
 }
 
-type Loc struct {
-	Geometry Geometry `json:"geometry,omitempty"`
+type loc struct {
+	Geometry geometry `json:"geometry,omitempty"`
 	Type     string   `json:"type,omitempty"`
 }
 
-// fetch_api parses the boxes defined above
-func fetch_api() []APIResponse {
+// fetchAPI parses the boxes defined above
+func fetchAPI() []APIResponse {
 	var responses []APIResponse
 
 	for _, box := range boxes {
@@ -103,58 +105,58 @@ func fetch_api() []APIResponse {
 	return responses
 }
 
-func get_temperatures(responses []APIResponse) []string {
+func getTemperatures(responses []APIResponse) []string {
 	//2. parse the responses, by getting the sensors with title = "Temperature", get the last measurements, get the value string and
-	var temperature_strings []string
+	var temperatureStrings []string
 
 	for _, response := range responses {
 		for _, sensor := range response.Sensors {
 			if sensor.Title == "Temperatur" {
 				//get the latest measurement
-				temperature_strings = append(temperature_strings, sensor.LastMeasurement.Value)
+				temperatureStrings = append(temperatureStrings, sensor.LastMeasurement.Value)
 			}
 		}
 	}
 
-	return temperature_strings
+	return temperatureStrings
 }
 
-func average_temperature(temperature_strings []string) float64 {
+func averageTemperature(temperatureStrings []string) float64 {
 	var temperatures []float64
-	for _, temperature_string := range temperature_strings {
-		float_t, err := strconv.ParseFloat(temperature_string, 64)
+	for _, temperatureString := range temperatureStrings {
+		floatTemperatur, err := strconv.ParseFloat(temperatureString, 64)
 		if err != nil {
 			println(fmt.Errorf("could not Parse Float: %v", err))
 			continue
 		}
-		temperatures = append(temperatures, float_t)
+		temperatures = append(temperatures, floatTemperatur)
 	}
 
 	//calc the mean
-	sum_temperatures := 0.0
+	sumTemperatures := 0.0
 	for _, temperature := range temperatures {
-		sum_temperatures += temperature
+		sumTemperatures += temperature
 	}
-	return (sum_temperatures / float64(len(temperatures)))
+	return (sumTemperatures / float64(len(temperatures)))
 }
 
-func fetch_Temperature() float64 {
+func fetchTemperature() float64 {
 	//1. gets responses from the API of 3 sensors
-	responses := fetch_api()
+	responses := fetchAPI()
 
 	//2. parse the responses, by getting the sensors with title = "Temperature", get the last measurements, get the value string and
-	temperature_strings := get_temperatures(responses)
-	fmt.Printf("%v", temperature_strings)
+	temperatureStrings := getTemperatures(responses)
+	fmt.Printf("%v", temperatureStrings)
 
 	//3. convert the value strings to float64, average the values
-	avgtemperature := average_temperature(temperature_strings)
+	avgtemperature := averageTemperature(temperatureStrings)
 
 	return avgtemperature
 }
 
 // ----- methods for presenting endpoints
 
-func start_enpoints() {
+func startEnpoints() {
 	r := gin.Default()
 
 	// Version endpoint
@@ -167,7 +169,7 @@ func start_enpoints() {
 	// Temperature endpoint (simulated)
 	r.GET("/temperature", func(c *gin.Context) {
 		// Simulate fetching temperature from a sensor or API
-		temperature := fetch_Temperature()
+		temperature := fetchTemperature()
 		c.JSON(http.StatusOK, gin.H{
 			"temperature": temperature,
 			"unit":        "Celsius",
@@ -180,12 +182,12 @@ func start_enpoints() {
 
 // ----- main methods
 
-func print_version() {
+func printVersion() {
 	println(version)
 }
 
 func main() {
-	print_version()
-	start_enpoints()
+	printVersion()
+	startEnpoints()
 	// start_enpoints()
 }
