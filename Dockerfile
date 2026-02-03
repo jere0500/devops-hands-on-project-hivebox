@@ -5,16 +5,13 @@ FROM golang:1.25-alpine AS builder
 WORKDIR /app
 
 # Copy the Go source code into the container
-COPY src/. .
+COPY go-src/. .
 
-# Download Go modules
-RUN go mod download
-
-# Build the Go application
-RUN go build -o main .
+# Download Go modules and build the Go application
+RUN go mod download & go build -o main .
 
 # Use a minimal Alpine Linux image for the final runtime
-FROM alpine:latest
+FROM alpine:3.23.3
 
 # Set the working directory
 WORKDIR /app
