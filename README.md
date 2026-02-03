@@ -52,4 +52,20 @@ Here is a pre-start checklist:
 
 ## Implementation
 
-** ADD YOUR IMPLEMENTATION DOCUMENTATION HERE **
+using 3 senseBox IDs close to each other
+following senseBox IDs where used (Munich/ Germany):
+https://opensensemap.org/explore/5991537e7e280a0010421ba7
+https://opensensemap.org/explore/61ec1a8478ce14001bc634f1
+https://opensensemap.org/explore/5c8d5386922ca90019e2959d
+
+https://api.opensensemap.org/boxes/5991537e7e280a0010421ba7?format=json
+https://api.opensensemap.org/boxes/61ec1a8478ce14001bc634f1?format=json
+https://api.opensensemap.org/boxes/5c8d5386922ca90019e2959d?format=json
+
+## Testing:
+to test the application, setup docker, run in the root directory of the project:
+
+`docker build -t hivebox .`
+`docker run hivebox`
+
+should print to terminal; `v0.0.1`
