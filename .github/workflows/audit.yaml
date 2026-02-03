@@ -7,8 +7,15 @@ on:
     branches: [dev, main]
 
 jobs:
+  dockerfile-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
 
-  audit:
+  go-audit:
     runs-on: ubuntu-latest
     defaults:
           run:
