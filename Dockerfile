@@ -5,7 +5,7 @@ FROM golang:1.25-alpine AS builder
 WORKDIR /app
 
 # Copy the Go source code into the container
-COPY . .
+COPY src/. .
 
 # Download Go modules
 RUN go mod download
