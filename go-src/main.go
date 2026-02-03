@@ -1,15 +1,19 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
-	"time"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 var(
 	version string = "v0.0.1"
+	boxes = []string{ "5991537e7e280a0010421ba7", "61ec1a8478ce14001bc634f1", "5c8d5386922ca90019e2959d" }
 )
 
 // types for receiving
@@ -60,9 +64,96 @@ type Loc struct {
 	Type string `json:"type,omitempty"`
 }
 
-func parse_Sensor()  {
-	// parse an example query
+
+// fetch_api parses the boxes defined above
+func fetch_api()  []APIResponse {
+	var responses []APIResponse
+
+	for _, box := range(boxes) {
+		// 1. Make the HTTP Request
+		request := fmt.Sprintf("https://api.opensensemap.org/boxes/%v?format=json", box)
+		println("request: ", request)
+
+		resp, err := http.Get(request) // Replace with your API endpoint
+		if err != nil {
+			log.Fatalf("Error making request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		// 2. Handle the Response
+		if resp.StatusCode != http.StatusOK {
+			log.Fatalf("Request failed with status code: %d", resp.StatusCode)
+		}
+
+		// 3. Decode the JSON
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalf("Error reading response body: %v", err)
+		}
+
+		var apiResponse APIResponse // Create a variable of the struct type
+
+		err = json.Unmarshal(body, &apiResponse) // Decode the JSON into the struct
+		if err != nil {
+			log.Fatalf("Error decoding JSON: %v", err)
+		}
+
+		responses = append(responses, apiResponse)
+	}
+
+	return responses
 }
+
+func get_temperatures(responses []APIResponse) []string {
+	//2. parse the responses, by getting the sensors with title = "Temperature", get the last measurements, get the value string and 
+	var temperature_strings []string
+
+	for _, response := range responses{
+		for _, sensor := range response.Sensors{
+			if(sensor.Title == "Temperatur"){
+				//get the latest measurement
+				temperature_strings = append(temperature_strings, sensor.LastMeasurement.Value)
+			}
+		}
+	}
+
+	return temperature_strings
+}
+
+func average_temperature(temperature_strings []string) float64 {
+	var temperatures []float64
+	for _, temperature_string := range temperature_strings{
+		float_t, err := strconv.ParseFloat(temperature_string, 64)
+		if err != nil {
+			fmt.Errorf("Could not Parse Float", err)
+			continue
+		}
+		temperatures = append(temperatures, float_t)
+	}
+
+	//calc the mean
+	sum_temperatures := 0.0
+	for _, temperature := range temperatures{
+		sum_temperatures += temperature	
+	}
+	return (sum_temperatures / float64(len(temperatures)))
+}
+
+func fetch_Temperature()(float64)  {
+	//1. gets responses from the API of 3 sensors
+	responses := fetch_api()
+
+	//2. parse the responses, by getting the sensors with title = "Temperature", get the last measurements, get the value string and 
+	temperature_strings := get_temperatures(responses)
+	fmt.Printf("%v", temperature_strings)
+
+	//3. convert the value strings to float64, average the values
+	avgtemperature := average_temperature(temperature_strings)
+
+	return avgtemperature
+}
+
+
 
 // ----- methods for presenting endpoints
 
@@ -79,7 +170,7 @@ func start_enpoints(){
 	// Temperature endpoint (simulated)
 	r.GET("/temperature", func(c *gin.Context) {
 		// Simulate fetching temperature from a sensor or API
-		temperature := 25.5 + float64(time.Now().UnixNano()%100) // Add some randomness
+		temperature := fetch_Temperature()
 		c.JSON(http.StatusOK, gin.H{
 			"temperature": temperature,
 			"unit":        "Celsius",
@@ -99,4 +190,5 @@ func print_version()  {
 func main()  {
 	print_version()
 	start_enpoints()
+	// start_enpoints()
 }
